@@ -1,0 +1,292 @@
+Perfect ✅ — you want a **complete `README.md`** for your **RAG HR Assistant** project, including:
+
+* Frontend + Backend setup
+* Local Ollama (Llama 3.2 + Nomic-Embed-Text) installation
+* Pinecone setup
+* Environment variables
+* How to run everything together locally
+
+Here’s a **professional production-ready README.md** you can drop straight into your repo 👇
+
+---
+
+# 🧠 RAG HR Assistant
+
+An AI-powered HR assistant built using **FastAPI + React + Pinecone + Ollama (Llama 3.2)**.
+It allows employees to ask HR-related questions (like leave policy, working hours, etc.) and get accurate answers from stored company policy PDFs using **Retrieval-Augmented Generation (RAG)**.
+
+---
+
+## 📁 Project Structure
+
+```
+rag-hr-assistant/
+│
+├── backend/
+│   ├── main.py
+│   ├── embeddings_loader.py
+│   ├── .env
+│   ├── data/
+│   │   └── hr_policies/       # PDF files with HR documents
+│   └── requirements.txt
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   └── components/
+│   ├── package.json
+│   └── .env
+│
+└── README.md
+```
+
+---
+
+## ⚙️ Backend Setup (FastAPI + Pinecone + Ollama)
+
+### 1️⃣ Create a virtual environment
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate   # (Windows)
+# source venv/bin/activate  # (Mac/Linux)
+```
+
+### 2️⃣ Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Example `requirements.txt`
+
+```txt
+fastapi
+uvicorn
+requests
+python-dotenv
+pinecone-client
+PyMuPDF
+```
+
+---
+
+### 3️⃣ Install and Run Ollama locally
+
+Ollama lets you run open-weight LLMs **completely offline**.
+
+#### 🧩 Install Ollama
+
+Go to 👉 [https://ollama.ai/download](https://ollama.ai/download)
+
+After installing:
+
+```bash
+ollama pull llama3.2
+ollama pull nomic-embed-text
+```
+
+To verify models:
+
+```bash
+ollama list
+```
+
+You should see:
+
+```
+llama3.2      latest
+nomic-embed-text latest
+```
+
+Keep Ollama running in background — it runs on `http://localhost:11434`.
+
+---
+
+### 4️⃣ Setup Pinecone
+
+Create a free account: [https://app.pinecone.io](https://app.pinecone.io)
+
+#### Create an Index
+
+* Name: `hr-policies`
+* Dimension: **768**
+* Metric: `cosine`
+* Cloud: AWS
+* Region: `us-east-1`
+
+---
+
+### 5️⃣ Environment Variables
+
+Create a file `.env` inside `backend/`:
+
+```env
+PINECONE_API_KEY=your_pinecone_api_key_here
+PINECONE_INDEX_NAME=hr-policies
+```
+
+---
+
+### 6️⃣ Load HR Policy PDFs into Pinecone
+
+Place all your HR PDFs inside:
+
+```
+backend/data/hr_policies/
+```
+
+Then run:
+
+```bash
+python embeddings_loader.py
+```
+
+✅ This will:
+
+* Read your PDFs
+* Generate embeddings via `nomic-embed-text`
+* Store them in your Pinecone index
+
+---
+
+### 7️⃣ Start Backend Server
+
+```bash
+uvicorn main:app --reload
+```
+
+You should see:
+
+```
+INFO:     Application startup complete.
+```
+
+Backend runs at:
+👉 **[http://localhost:8000](http://localhost:8000)**
+
+Test in browser:
+[http://localhost:8000](http://localhost:8000)
+
+---
+
+## 💻 Frontend Setup (React)
+
+### 1️⃣ Go to frontend folder
+
+```bash
+cd ../frontend
+```
+
+### 2️⃣ Install dependencies
+
+```bash
+npm install
+```
+
+### 3️⃣ Create `.env` in `frontend/`
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+### 4️⃣ Start frontend
+
+```bash
+npm run dev
+```
+
+It will show something like:
+
+```
+Local:   http://localhost:5173/
+```
+
+Open that URL in your browser.
+
+---
+
+## 🧩 Chat Flow
+
+1. Type your question (e.g. *“What is the annual leave policy?”*).
+2. React frontend calls backend `/ask` API.
+3. Backend:
+
+   * Generates an embedding of the question using **nomic-embed-text**.
+   * Searches **Pinecone** for the most relevant policy text.
+   * Combines top results as context.
+   * Sends it to **Llama 3.2** to generate a human-like answer.
+4. Response is displayed back to the user.
+
+---
+
+## 🚀 Example Interaction
+
+**User:**
+
+> What are the office working hours?
+
+**Assistant:**
+
+> Office hours are from 9 AM – 6 PM, Monday to Friday.
+
+---
+
+## 🧪 Test Backend
+
+You can test manually with:
+
+```bash
+curl -X POST http://localhost:8000/ask \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What is the leave policy?"}'
+```
+
+Expected JSON response:
+
+```json
+{
+  "answer": "Employees are entitled to 18 days of annual leave per year."
+}
+```
+
+---
+
+## 🛠️ Common Issues
+
+| Issue                                                  | Fix                                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| ❌ `Vector dimension 768 does not match the index 1536` | Recreate your Pinecone index with `dimension=768`.                                    |
+| ❌ `Embedding generation failed`                        | Ensure Ollama is running: `ollama serve`.                                             |
+| ❌ `CORS Error`                                         | Add `from fastapi.middleware.cors import CORSMiddleware` and allow localhost origins. |
+| ❌ “Sorry, I couldn’t find anything”                    | Make sure you ran `embeddings_loader.py` and PDFs exist in `data/hr_policies/`.       |
+
+---
+
+## 🧰 Add CORS Middleware (optional)
+
+If you face CORS errors, add this in `main.py`:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+---
+
+## 🧾 License
+
+MIT License © 2025 Remarkinfo Software Solutions
+
+---
+
+Would you like me to also generate a **sample `frontend/src/App.jsx` and `backend/requirements.txt`** (clean, error-free, minimal working version) to include in your project?
+That way your README + code will run perfectly from scratch on any system.
