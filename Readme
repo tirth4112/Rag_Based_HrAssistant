@@ -1,283 +1,169 @@
 
-* Frontend + Backend setup
-* Local Ollama (Llama 3.2 + Nomic-Embed-Text) installation
-* Pinecone setup
-* Environment variables
-* How to run everything together locally
-
-Here’s a **professional production-ready README.md** you can drop straight into your repo 👇
-
----
-
 # 🧠 RAG HR Assistant
 
-An AI-powered HR assistant built using **FastAPI + React + Pinecone + Ollama (Llama 3.2)**.
-It allows employees to ask HR-related questions (like leave policy, working hours, etc.) and get accurate answers from stored company policy PDFs using **Retrieval-Augmented Generation (RAG)**.
+The **RAG HR Assistant** is an AI-powered HR chatbot built using **FastAPI**, **React**, **Pinecone**, and **Ollama (Llama 3.2)**.
+It helps employees quickly find answers from HR policy documents — just ask a question, and it responds intelligently using your organization’s HR data.
 
 ---
 
-## 📁 Project Structure
+## 💡 What It Does
 
-```
-rag-hr-assistant/
-│
-├── backend/
-│   ├── main.py
-│   ├── embeddings_loader.py
-│   ├── .env
-│   ├── data/
-│   │   └── hr_policies/       # PDF files with HR documents
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   └── components/
-│   ├── package.json
-│   └── .env
-│
-└── README.md
-```
+This chatbot uses **Retrieval-Augmented Generation (RAG)**, which means it:
+
+1. Reads your HR policy PDFs.
+2. Stores them as embeddings in **Pinecone**.
+3. Uses **Llama 3.2** to generate human-like responses.
+4. Runs entirely **locally** with Ollama — no external APIs required.
+
+You can ask questions like:
+
+* “What is our annual leave policy?”
+* “What are the office working hours?”
+* “Do employees get health insurance coverage?”
 
 ---
 
-## ⚙️ Backend Setup (FastAPI + Pinecone + Ollama)
+## 🗂️ Project Structure
 
-### 1️⃣ Create a virtual environment
+The project is divided into two main parts:
 
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate   # (Windows)
-# source venv/bin/activate  # (Mac/Linux)
-```
+* **Backend (FastAPI)** – Handles document embedding, querying, and LLM response generation.
+* **Frontend (React)** – Provides a simple and clean chat interface for users.
 
-### 2️⃣ Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-Example `requirements.txt`
-
-```txt
-fastapi
-uvicorn
-requests
-python-dotenv
-pinecone-client
-PyMuPDF
-```
+The backend connects to **Ollama** and **Pinecone**, while the frontend communicates via REST APIs.
 
 ---
 
-### 3️⃣ Install and Run Ollama locally
+## ⚙️ Backend Setup
 
-Ollama lets you run open-weight LLMs **completely offline**.
+### Step 1 – Create and activate a virtual environment
 
-#### 🧩 Install Ollama
+Inside the `backend` folder, create a Python virtual environment and install dependencies.
 
-Go to 👉 [https://ollama.ai/download](https://ollama.ai/download)
+### Step 2 – Configure Ollama
 
-After installing:
+Install Ollama from the official website and pull the required models: **Llama 3.2** and **Nomic-Embed-Text**.
+Ollama runs locally on port `11434`, so your data never leaves your machine.
 
-```bash
-ollama pull llama3.2
-ollama pull nomic-embed-text
-```
+### Step 3 – Setup Pinecone
 
-To verify models:
+Create a free Pinecone account and a new index named `hr-policies`.
+Use dimension `768`, metric `cosine`, and region `us-east-1`.
 
-```bash
-ollama list
-```
+### Step 4 – Add Environment Variables
 
-You should see:
+In the backend `.env` file, include your Pinecone API key and index name.
+This allows the application to connect securely with your Pinecone vector store.
 
-```
-llama3.2      latest
-nomic-embed-text latest
-```
+### Step 5 – Load PDF Documents
 
-Keep Ollama running in background — it runs on `http://localhost:11434`.
+Add your company HR policy PDFs to the folder `backend/data/hr_policies/`.
+Then, run the embedding loader script once to store them into Pinecone.
 
----
+### Step 6 – Start the Backend
 
-### 4️⃣ Setup Pinecone
-
-Create a free account: [https://app.pinecone.io](https://app.pinecone.io)
-
-#### Create an Index
-
-* Name: `hr-policies`
-* Dimension: **768**
-* Metric: `cosine`
-* Cloud: AWS
-* Region: `us-east-1`
+Run the FastAPI server locally.
+Once it’s up, your API will be available at `http://localhost:8000`.
 
 ---
 
-### 5️⃣ Environment Variables
+## 💻 Frontend Setup
 
-Create a file `.env` inside `backend/`:
+### Step 1 – Install dependencies
 
-```env
-PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_INDEX_NAME=hr-policies
-```
+Navigate to the `frontend` folder and install all required npm packages.
 
----
+### Step 2 – Add environment variable
 
-### 6️⃣ Load HR Policy PDFs into Pinecone
+In the frontend `.env` file, specify the backend URL (usually `http://localhost:8000`).
 
-Place all your HR PDFs inside:
+### Step 3 – Start the frontend
 
-```
-backend/data/hr_policies/
-```
-
-Then run:
-
-```bash
-python embeddings_loader.py
-```
-
-✅ This will:
-
-* Read your PDFs
-* Generate embeddings via `nomic-embed-text`
-* Store them in your Pinecone index
+Run the React app, which will start at `http://localhost:5173`.
+You’ll see a chatbot interface where you can start asking HR-related questions.
 
 ---
 
-### 7️⃣ Start Backend Server
+## 🧩 How It Works
 
-```bash
-uvicorn main:app --reload
-```
+1. You type a question in the chat interface.
+2. The frontend sends it to the FastAPI backend.
+3. The backend:
 
-You should see:
-
-```
-INFO:     Application startup complete.
-```
-
-Backend runs at:
-👉 **[http://localhost:8000](http://localhost:8000)**
-
-Test in browser:
-[http://localhost:8000](http://localhost:8000)
+   * Converts your question into a vector embedding using **Nomic-Embed-Text**.
+   * Searches for similar content in **Pinecone**.
+   * Combines the most relevant sections as context.
+   * Sends the context to **Llama 3.2** for answer generation.
+4. The assistant returns a precise, conversational response.
 
 ---
 
-## 💻 Frontend Setup (React)
+## 🧠 Example Interaction
 
-### 1️⃣ Go to frontend folder
-
-```bash
-cd ../frontend
-```
-
-### 2️⃣ Install dependencies
-
-```bash
-npm install
-```
-
-### 3️⃣ Create `.env` in `frontend/`
-
-```env
-VITE_API_URL=http://localhost:8000
-```
-
-### 4️⃣ Start frontend
-
-```bash
-npm run dev
-```
-
-It will show something like:
-
-```
-Local:   http://localhost:5173/
-```
-
-Open that URL in your browser.
+**User:** What is the annual leave policy?
+**Assistant:** Employees are entitled to 18 days of paid annual leave per year.
 
 ---
 
-## 🧩 Chat Flow
+## 🔧 Common Issues and Fixes
 
-1. Type your question (e.g. *“What is the annual leave policy?”*).
-2. React frontend calls backend `/ask` API.
-3. Backend:
-
-   * Generates an embedding of the question using **nomic-embed-text**.
-   * Searches **Pinecone** for the most relevant policy text.
-   * Combines top results as context.
-   * Sends it to **Llama 3.2** to generate a human-like answer.
-4. Response is displayed back to the user.
+* **Vector dimension mismatch**: Recreate the Pinecone index with dimension `768`.
+* **Embedding generation failed**: Make sure Ollama is running in the background.
+* **CORS errors**: Allow cross-origin requests in the backend using FastAPI middleware.
+* **No answers returned**: Ensure you’ve uploaded HR policy PDFs and run the embedding loader.
 
 ---
 
-## 🚀 Example Interaction
+## 🛠️ Technologies Used
 
-**User:**
-
-> What are the office working hours?
-
-**Assistant:**
-
-> Office hours are from 9 AM – 6 PM, Monday to Friday.
-
----
-
-## 🧪 Test Backend
-
-You can test manually with:
-
-```bash
-curl -X POST http://localhost:8000/ask \
-     -H "Content-Type: application/json" \
-     -d '{"question": "What is the leave policy?"}'
-```
-
-Expected JSON response:
-
-```json
-{
-  "answer": "Employees are entitled to 18 days of annual leave per year."
-}
-```
+* **FastAPI** – Backend framework for APIs
+* **React.js** – Frontend for the chat interface
+* **Ollama** – Local LLM runtime for embedding and generation
+* **Llama 3.2** – The local large language model for answering questions
+* **Nomic-Embed-Text** – Embedding model for text vectorization
+* **Pinecone** – Vector database for semantic search
+* **PyMuPDF** – Extracts text from PDF HR documents
 
 ---
 
-## 🛠️ Common Issues
+## 🚀 Running the Full System Locally
 
-| Issue                                                  | Fix                                                                                   |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| ❌ `Vector dimension 768 does not match the index 1536` | Recreate your Pinecone index with `dimension=768`.                                    |
-| ❌ `Embedding generation failed`                        | Ensure Ollama is running: `ollama serve`.                                             |
-| ❌ `CORS Error`                                         | Add `from fastapi.middleware.cors import CORSMiddleware` and allow localhost origins. |
-| ❌ “Sorry, I couldn’t find anything”                    | Make sure you ran `embeddings_loader.py` and PDFs exist in `data/hr_policies/`.       |
+1. Start Ollama on your system.
+2. Start the FastAPI backend (`uvicorn main:app --reload`).
+3. Start the React frontend (`npm run dev`).
+4. Open your browser and go to `http://localhost:5173`.
+5. Ask any HR-related question and get instant AI-generated responses!
+
+---
+
+## ❤️ Why This Project Matters
+
+This assistant helps organizations:
+
+* Reduce repetitive HR queries.
+* Make policy documents easily accessible.
+* Empower employees with self-service HR support.
+
+It’s a simple, private, and efficient way to bring **AI-powered HR automation** into any organization.
 
 ---
 
-## 🧰 Add CORS Middleware (optional)
+## 🧩 Next Steps
 
-If you face CORS errors, add this in `main.py`:
-
-```python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
+* Add support for multilingual policies.
+* Extend context retrieval to multiple departments.
+* Deploy on a private server or cloud.
+* Connect to live HR systems for dynamic responses.
 
 ---
+
+## 👏 Credits
+
+Built with 💡 by leveraging open-source AI tools:
+
+* **Ollama**
+* **Llama 3.2**
+* **Pinecone**
+* **FastAPI**
+* **React**
 
