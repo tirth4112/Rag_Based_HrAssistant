@@ -1,4 +1,3 @@
-Perfect ✅ — you want a **complete `README.md`** for your **RAG HR Assistant** project, including:
 
 * Frontend + Backend setup
 * Local Ollama (Llama 3.2 + Nomic-Embed-Text) installation
@@ -282,11 +281,3 @@ app.add_middleware(
 
 ---
 
-## 🧾 License
-
-MIT License © 2025 Remarkinfo Software Solutions
-
----
-
-Would you like me to also generate a **sample `frontend/src/App.jsx` and `backend/requirements.txt`** (clean, error-free, minimal working version) to include in your project?
-That way your README + code will run perfectly from scratch on any system.
